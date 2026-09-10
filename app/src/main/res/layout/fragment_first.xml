@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="20dp">
+
+    <!-- TÍTULO DEL JUEGO -->
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/game_title"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <!-- ESTADO DEL JUEGO -->
+    <TextView
+        android:id="@+id/information"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/turn_human"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- TABLERO 3 x 3 -->
+    <TableLayout
+        android:id="@+id/play_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- FILA 1 -->
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/one"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_1"
+                android:textSize="48sp" />
+
+            <Button
+                android:id="@+id/two"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_2"
+                android:textSize="48sp" />
+
+            <Button
+                android:id="@+id/three"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_3"
+                android:textSize="48sp" />
+
+        </TableRow>
+
+        <!-- FILA 2 -->
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/four"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_4"
+                android:textSize="48sp" />
+
+            <Button
+                android:id="@+id/five"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_5"
+                android:textSize="48sp" />
+
+            <Button
+                android:id="@+id/six"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_6"
+                android:textSize="48sp" />
+
+        </TableRow>
+
+        <!-- FILA 3 -->
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/seven"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_7"
+                android:textSize="48sp" />
+
+            <Button
+                android:id="@+id/eight"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_8"
+                android:textSize="48sp" />
+
+            <Button
+                android:id="@+id/nine"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text=""
+                android:contentDescription="@string/cell_9"
+                android:textSize="48sp" />
+
+        </TableRow>
+
+    </TableLayout>
+
+    <!-- BOTÓN PARA INICIAR UNA NUEVA PARTIDA -->
+    <Button
+        android:id="@+id/restartButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/new_game"
+        android:layout_marginTop="24dp" />
+
+</LinearLayout>
