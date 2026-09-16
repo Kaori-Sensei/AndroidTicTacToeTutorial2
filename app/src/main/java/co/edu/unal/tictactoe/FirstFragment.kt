@@ -3,10 +3,16 @@ package co.edu.unal.tictactoe
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.appcompat.app.AlertDialog
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import co.edu.unal.tictactoe.databinding.FragmentFirstBinding
 
 
@@ -14,10 +20,10 @@ import co.edu.unal.tictactoe.databinding.FragmentFirstBinding
  * FirstFragment controla la parte visual del juego.
  *
  * Aquí conectamos:
- *
  * - Los nueve botones del tablero.
  * - El texto que informa el estado de la partida.
  * - El botón "New Game".
+ * - El menú de opciones.
  *
  * La lógica del juego permanece separada
  * en la clase TicTacToeGame.
@@ -29,10 +35,8 @@ class FirstFragment : Fragment() {
     // 1. VIEW BINDING
     // ============================================================
 
-    // _binding permite acceder a los elementos de fragment_first.xml.
     private var _binding: FragmentFirstBinding? = null
 
-    // Esta propiedad facilita utilizar binding dentro del Fragment.
     private val binding get() = _binding!!
 
 
@@ -40,10 +44,10 @@ class FirstFragment : Fragment() {
     // 2. LÓGICA DEL JUEGO
     // ============================================================
 
-    // Creamos una instancia del "cerebro" del Tic-Tac-Toe.
+    // Instancia del "cerebro" del Tic-Tac-Toe.
     private val game = TicTacToeGame()
 
-    // Array que contendrá los nueve botones del tablero.
+    // Array con los nueve botones del tablero.
     private lateinit var boardButtons: Array<Button>
 
     // Indica si la partida ya terminó.
@@ -60,7 +64,6 @@ class FirstFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        // Conectamos el Fragment con fragment_first.xml.
         _binding = FragmentFirstBinding.inflate(
             inflater,
             container,
@@ -115,6 +118,81 @@ class FirstFragment : Fragment() {
 
             startNewGame()
         }
+
+
+        // --------------------------------------------------------
+        // MENÚ DE OPCIONES
+        // --------------------------------------------------------
+
+        requireActivity().addMenuProvider(
+
+            object : MenuProvider {
+
+                // Creamos el menú utilizando options_menu.xml.
+                override fun onCreateMenu(
+                    menu: Menu,
+                    menuInflater: MenuInflater
+                ) {
+
+                    menuInflater.inflate(
+                        R.menu.options_menu,
+                        menu
+                    )
+                }
+
+
+                // Detectamos qué opción seleccionó el usuario.
+                override fun onMenuItemSelected(
+                    menuItem: MenuItem
+                ): Boolean {
+
+                    return when (menuItem.itemId) {
+
+
+                        // ----------------------------------------
+                        // NEW GAME
+                        // ----------------------------------------
+
+                        R.id.new_game -> {
+
+                            startNewGame()
+
+                            true
+                        }
+
+
+                        // ----------------------------------------
+                        // DIFFICULTY
+                        // ----------------------------------------
+
+                        R.id.ai_difficulty -> {
+
+                            showDifficultyDialog()
+
+                            true
+                        }
+
+
+                        // ----------------------------------------
+                        // QUIT
+                        // ----------------------------------------
+
+                        R.id.quit -> {
+
+                            showQuitDialog()
+
+                            true
+                        }
+
+
+                        else -> false
+                    }
+                }
+            },
+
+            viewLifecycleOwner,
+            Lifecycle.State.RESUMED
+        )
     }
 
 
@@ -153,7 +231,7 @@ class FirstFragment : Fragment() {
             // 3 | 4 | 5
             // ---------
             // 6 | 7 | 8
-            //
+
             button.setOnClickListener {
 
                 humanMove(i)
@@ -181,21 +259,19 @@ class FirstFragment : Fragment() {
 
 
         // Intentamos realizar la jugada.
-        //
-        // makeMove devuelve false si la casilla
-        // ya estaba ocupada.
         val validMove = game.makeMove(position)
 
 
+        // Si la posición ya estaba ocupada, no hacemos nada.
         if (!validMove) {
             return
         }
 
 
-        // Mostramos X en la pantalla.
+        // Mostramos X.
         boardButtons[position].text = "X"
 
-        // X debe aparecer verde, según el reto.
+        // X aparece verde.
         boardButtons[position].setTextColor(
             Color.rgb(0, 180, 0)
         )
@@ -208,19 +284,19 @@ class FirstFragment : Fragment() {
         var result = game.checkWinner()
 
 
-        // Si la partida todavía continúa,
+        // Si la partida continúa,
         // dejamos jugar al computador.
         if (result == 0) {
 
             computerMove()
 
-            // Revisamos nuevamente el resultado
-            // después del movimiento del computador.
+            // Revisamos nuevamente después
+            // del movimiento del computador.
             result = game.checkWinner()
         }
 
 
-        // Actualizamos el texto de estado.
+        // Actualizamos el estado de la partida.
         updateGameStatus(result)
     }
 
@@ -237,18 +313,19 @@ class FirstFragment : Fragment() {
         )
 
 
-        // TicTacToeGame decide cuál es la mejor posición.
+        // TicTacToeGame decide la posición según
+        // el nivel de dificultad seleccionado.
         val position = game.getComputerMove()
 
 
-        // -1 significa que ya no existen posiciones disponibles.
+        // -1 significa que no existen posiciones disponibles.
         if (position == -1) {
             return
         }
 
 
-        // En este momento currentPlayer es O,
-        // porque makeMove() cambió el turno después de la X.
+        // currentPlayer es O porque makeMove()
+        // cambió el turno después de jugar X.
         game.makeMove(position)
 
 
@@ -260,7 +337,7 @@ class FirstFragment : Fragment() {
             Color.rgb(200, 0, 0)
         )
 
-        // La casilla ya no puede volver a utilizarse.
+        // Deshabilitamos la posición.
         boardButtons[position].isEnabled = false
     }
 
@@ -273,9 +350,11 @@ class FirstFragment : Fragment() {
 
         when (result) {
 
+
             // ----------------------------------------------------
-            // 0 = la partida continúa
+            // 0 = LA PARTIDA CONTINÚA
             // ----------------------------------------------------
+
             0 -> {
 
                 binding.information.setText(
@@ -285,8 +364,9 @@ class FirstFragment : Fragment() {
 
 
             // ----------------------------------------------------
-            // 1 = ganó X
+            // 1 = GANÓ X
             // ----------------------------------------------------
+
             1 -> {
 
                 binding.information.setText(
@@ -298,8 +378,9 @@ class FirstFragment : Fragment() {
 
 
             // ----------------------------------------------------
-            // 2 = ganó O
+            // 2 = GANÓ O
             // ----------------------------------------------------
+
             2 -> {
 
                 binding.information.setText(
@@ -311,8 +392,9 @@ class FirstFragment : Fragment() {
 
 
             // ----------------------------------------------------
-            // 3 = empate
+            // 3 = EMPATE
             // ----------------------------------------------------
+
             3 -> {
 
                 binding.information.setText(
@@ -335,11 +417,8 @@ class FirstFragment : Fragment() {
         gameOver = true
 
 
-        // Deshabilitamos todas las casillas.
-        //
-        // Así solucionamos uno de los problemas
-        // señalados expresamente en el reto:
-        // no permitir movimientos después del final.
+        // Deshabilitamos todas las casillas para impedir
+        // movimientos después de terminar la partida.
         for (button in boardButtons) {
 
             button.isEnabled = false
@@ -348,7 +427,99 @@ class FirstFragment : Fragment() {
 
 
     // ============================================================
-    // 10. LIBERAR VIEW BINDING
+    // 10. SELECCIONAR DIFICULTAD
+    // ============================================================
+
+    private fun showDifficultyDialog() {
+
+        // Niveles disponibles.
+        val levels = arrayOf(
+            "Easy",
+            "Harder",
+            "Expert"
+        )
+
+
+        // Identificamos cuál dificultad está
+        // seleccionada actualmente.
+        val selected = when (game.getDifficultyLevel()) {
+
+            TicTacToeGame.DifficultyLevel.EASY -> 0
+
+            TicTacToeGame.DifficultyLevel.HARDER -> 1
+
+            TicTacToeGame.DifficultyLevel.EXPERT -> 2
+        }
+
+
+        // Creamos el cuadro de diálogo.
+        AlertDialog.Builder(requireContext())
+
+            .setTitle("Choose difficulty")
+
+            .setSingleChoiceItems(
+                levels,
+                selected
+            ) { dialog, which ->
+
+
+                // Cambiamos la dificultad según
+                // la opción seleccionada.
+                when (which) {
+
+                    0 -> game.setDifficultyLevel(
+                        TicTacToeGame.DifficultyLevel.EASY
+                    )
+
+                    1 -> game.setDifficultyLevel(
+                        TicTacToeGame.DifficultyLevel.HARDER
+                    )
+
+                    2 -> game.setDifficultyLevel(
+                        TicTacToeGame.DifficultyLevel.EXPERT
+                    )
+                }
+
+
+                // Cerramos el cuadro de diálogo.
+                dialog.dismiss()
+            }
+
+            .show()
+    }
+
+
+    // ============================================================
+    // 11. CONFIRMAR SALIDA
+    // ============================================================
+
+    private fun showQuitDialog() {
+
+        AlertDialog.Builder(requireContext())
+
+            .setTitle("Quit")
+
+            .setMessage(
+                "Are you sure you want to quit?"
+            )
+
+            .setPositiveButton("Yes") { _, _ ->
+
+                // Cerramos la Activity.
+                requireActivity().finish()
+            }
+
+            .setNegativeButton(
+                "No",
+                null
+            )
+
+            .show()
+    }
+
+
+    // ============================================================
+    // 12. LIBERAR VIEW BINDING
     // ============================================================
 
     override fun onDestroyView() {
