@@ -1,6 +1,6 @@
 package co.edu.unal.tictactoe
 
-import android.graphics.Color
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -8,28 +8,22 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import co.edu.unal.tictactoe.databinding.FragmentFirstBinding
 
-
 /**
- * FirstFragment controla la parte visual del juego.
+ * FirstFragment controla la interfaz del juego.
  *
- * Aquí conectamos:
- * - Los nueve botones del tablero.
- * - El texto que informa el estado de la partida.
- * - El botón "New Game".
- * - El menú de opciones.
- *
- * La lógica del juego permanece separada
- * en la clase TicTacToeGame.
+ * Reto 5:
+ * - El tablero utiliza una vista personalizada BoardView.
+ * - El tablero, las X y las O se dibujan mediante Canvas.
+ * - Se detectan los toques directamente sobre BoardView.
+ * - Se reproducen sonidos diferentes para el jugador y Android.
  */
 class FirstFragment : Fragment() {
-
 
     // ============================================================
     // 1. VIEW BINDING
@@ -44,18 +38,30 @@ class FirstFragment : Fragment() {
     // 2. LÓGICA DEL JUEGO
     // ============================================================
 
-    // Instancia del "cerebro" del Tic-Tac-Toe.
     private val game = TicTacToeGame()
 
-    // Array con los nueve botones del tablero.
-    private lateinit var boardButtons: Array<Button>
-
-    // Indica si la partida ya terminó.
     private var gameOver = false
+
+    // Evita que el jugador toque otra casilla
+    // mientras Android está realizando su movimiento.
+    private var computerThinking = false
 
 
     // ============================================================
-    // 3. CREACIÓN DE LA INTERFAZ
+    // 3. SONIDO
+    // ============================================================
+// Indica si los efectos de sonido están activados.
+// Por defecto comienzan activados.
+    private var soundEnabled = true
+
+    // Utilizamos un solo MediaPlayer para evitar
+// que los sonidos se reproduzcan simultáneamente.
+    private var mediaPlayer: MediaPlayer? = null
+
+
+
+    // ============================================================
+    // 4. CREACIÓN DE LA INTERFAZ
     // ============================================================
 
     override fun onCreateView(
@@ -75,7 +81,7 @@ class FirstFragment : Fragment() {
 
 
     // ============================================================
-    // 4. CUANDO LA VISTA YA ESTÁ CREADA
+    // 5. CUANDO LA VISTA YA ESTÁ CREADA
     // ============================================================
 
     override fun onViewCreated(
@@ -85,25 +91,14 @@ class FirstFragment : Fragment() {
 
         super.onViewCreated(view, savedInstanceState)
 
-
         // --------------------------------------------------------
-        // CONECTAMOS LOS 9 BOTONES DEL XML
+        // DETECTAR TOQUES SOBRE BOARDVIEW
         // --------------------------------------------------------
 
-        boardButtons = arrayOf(
+        binding.boardView.onCellClickListener = { position ->
 
-            binding.one,      // posición 0
-            binding.two,      // posición 1
-            binding.three,    // posición 2
-
-            binding.four,     // posición 3
-            binding.five,     // posición 4
-            binding.six,      // posición 5
-
-            binding.seven,    // posición 6
-            binding.eight,    // posición 7
-            binding.nine      // posición 8
-        )
+            humanMove(position)
+        }
 
 
         // Iniciamos la primera partida.
@@ -128,7 +123,6 @@ class FirstFragment : Fragment() {
 
             object : MenuProvider {
 
-                // Creamos el menú utilizando options_menu.xml.
                 override fun onCreateMenu(
                     menu: Menu,
                     menuInflater: MenuInflater
@@ -141,18 +135,13 @@ class FirstFragment : Fragment() {
                 }
 
 
-                // Detectamos qué opción seleccionó el usuario.
                 override fun onMenuItemSelected(
                     menuItem: MenuItem
                 ): Boolean {
 
                     return when (menuItem.itemId) {
 
-
-                        // ----------------------------------------
                         // NEW GAME
-                        // ----------------------------------------
-
                         R.id.new_game -> {
 
                             startNewGame()
@@ -161,22 +150,31 @@ class FirstFragment : Fragment() {
                         }
 
 
-                        // ----------------------------------------
                         // DIFFICULTY
-                        // ----------------------------------------
-
                         R.id.ai_difficulty -> {
 
                             showDifficultyDialog()
 
                             true
                         }
+// SOUND
+                        R.id.sound -> {
 
+                            soundEnabled = !soundEnabled
 
-                        // ----------------------------------------
+                            menuItem.isChecked = soundEnabled
+
+                            menuItem.title =
+                                if (soundEnabled) {
+                                    "Sound: ON"
+                                } else {
+                                    "Sound: OFF"
+                                }
+
+                            true
+                        }
+
                         // QUIT
-                        // ----------------------------------------
-
                         R.id.quit -> {
 
                             showQuitDialog()
@@ -197,49 +195,23 @@ class FirstFragment : Fragment() {
 
 
     // ============================================================
-    // 5. INICIAR UNA NUEVA PARTIDA
+    // 6. INICIAR UNA NUEVA PARTIDA
     // ============================================================
 
     private fun startNewGame() {
 
-        // Limpiamos el tablero interno.
+        // Detenemos cualquier sonido anterior.
+        stopSound()
+
+        // Reiniciamos la lógica del juego.
         game.resetGame()
 
-        // Indicamos que la partida está activa.
+        // Limpiamos visualmente el BoardView.
+        binding.boardView.clearBoard()
+
         gameOver = false
+        computerThinking = false
 
-
-        // Recorremos los nueve botones.
-        for (i in boardButtons.indices) {
-
-            val button = boardButtons[i]
-
-            // Borramos cualquier X u O anterior.
-            button.text = ""
-
-            // Habilitamos nuevamente la casilla.
-            button.isEnabled = true
-
-            // Dejamos el color inicial.
-            button.setTextColor(Color.BLACK)
-
-
-            // Cada botón conoce su posición:
-            //
-            // 0 | 1 | 2
-            // ---------
-            // 3 | 4 | 5
-            // ---------
-            // 6 | 7 | 8
-
-            button.setOnClickListener {
-
-                humanMove(i)
-            }
-        }
-
-
-        // Mostramos el mensaje inicial.
         binding.information.setText(
             R.string.first_human
         )
@@ -247,7 +219,7 @@ class FirstFragment : Fragment() {
 
 
     // ============================================================
-    // 6. MOVIMIENTO DEL JUGADOR HUMANO
+    // 7. MOVIMIENTO DEL JUGADOR HUMANO
     // ============================================================
 
     private fun humanMove(position: Int) {
@@ -257,104 +229,129 @@ class FirstFragment : Fragment() {
             return
         }
 
+        // Si Android está pensando, tampoco permitimos otra jugada.
+        if (computerThinking) {
+            return
+        }
 
-        // Intentamos realizar la jugada.
+        // Evitamos seleccionar una casilla ya ocupada.
+        if (binding.boardView.getCell(position) != ' ') {
+            return
+        }
+
+        // Intentamos realizar la jugada en la lógica.
         val validMove = game.makeMove(position)
 
-
-        // Si la posición ya estaba ocupada, no hacemos nada.
         if (!validMove) {
             return
         }
 
 
-        // Mostramos X.
-        boardButtons[position].text = "X"
-
-        // X aparece verde.
-        boardButtons[position].setTextColor(
-            Color.rgb(0, 180, 0)
+        // Dibujamos la X en BoardView.
+        binding.boardView.setCell(
+            position,
+            'X'
         )
 
-        // Deshabilitamos esa posición.
-        boardButtons[position].isEnabled = false
+
+        // --------------------------------------------------------
+        // SONIDO DEL MOVIMIENTO DEL JUGADOR
+        // --------------------------------------------------------
+
+        playSound(R.raw.human_move)
 
 
-        // Revisamos si X ganó.
-        var result = game.checkWinner()
+        // Revisamos si el jugador ganó.
+        val result = game.checkWinner()
 
 
-        // Si la partida continúa,
-        // dejamos jugar al computador.
-        if (result == 0) {
+        // Si el jugador ganó o hubo empate,
+        // actualizamos inmediatamente el estado.
+        if (result != 0) {
 
-            computerMove()
+            updateGameStatus(result)
 
-            // Revisamos nuevamente después
-            // del movimiento del computador.
-            result = game.checkWinner()
+            return
         }
 
 
-        // Actualizamos el estado de la partida.
-        updateGameStatus(result)
-    }
+        // --------------------------------------------------------
+        // TURNO DE ANDROID
+        // --------------------------------------------------------
 
+        computerThinking = true
 
-    // ============================================================
-    // 7. MOVIMIENTO DEL COMPUTADOR
-    // ============================================================
-
-    private fun computerMove() {
-
-        // Informamos que es turno del computador.
         binding.information.setText(
             R.string.turn_computer
         )
 
 
-        // TicTacToeGame decide la posición según
-        // el nivel de dificultad seleccionado.
+        // Pequeña pausa para separar visualmente y acústicamente
+        // la jugada humana de la jugada de Android.
+        binding.boardView.postDelayed({
+
+            if (_binding == null || gameOver) {
+                computerThinking = false
+                return@postDelayed
+            }
+
+            computerMove()
+
+            val computerResult = game.checkWinner()
+
+            computerThinking = false
+
+            updateGameStatus(computerResult)
+
+        }, 1000)
+    }
+
+
+    // ============================================================
+    // 8. MOVIMIENTO DEL COMPUTADOR
+    // ============================================================
+
+    private fun computerMove() {
+
+        // La lógica selecciona una posición dependiendo
+        // de Easy, Harder o Expert.
         val position = game.getComputerMove()
 
 
-        // -1 significa que no existen posiciones disponibles.
+        // No quedan movimientos.
         if (position == -1) {
             return
         }
 
 
-        // currentPlayer es O porque makeMove()
-        // cambió el turno después de jugar X.
+        // Registramos el movimiento del computador.
         game.makeMove(position)
 
 
-        // Mostramos O.
-        boardButtons[position].text = "O"
-
-        // O aparece rojo.
-        boardButtons[position].setTextColor(
-            Color.rgb(200, 0, 0)
+        // Dibujamos O sobre el Canvas.
+        binding.boardView.setCell(
+            position,
+            'O'
         )
 
-        // Deshabilitamos la posición.
-        boardButtons[position].isEnabled = false
+
+        // --------------------------------------------------------
+        // SONIDO DEL MOVIMIENTO DEL COMPUTADOR
+        // --------------------------------------------------------
+
+        playSound(R.raw.computer_move)
     }
 
 
     // ============================================================
-    // 8. ACTUALIZAR EL RESULTADO
+    // 9. ACTUALIZAR EL ESTADO DE LA PARTIDA
     // ============================================================
 
     private fun updateGameStatus(result: Int) {
 
         when (result) {
 
-
-            // ----------------------------------------------------
-            // 0 = LA PARTIDA CONTINÚA
-            // ----------------------------------------------------
-
+            // La partida continúa.
             0 -> {
 
                 binding.information.setText(
@@ -363,10 +360,7 @@ class FirstFragment : Fragment() {
             }
 
 
-            // ----------------------------------------------------
-            // 1 = GANÓ X
-            // ----------------------------------------------------
-
+            // Ganó el jugador.
             1 -> {
 
                 binding.information.setText(
@@ -377,10 +371,7 @@ class FirstFragment : Fragment() {
             }
 
 
-            // ----------------------------------------------------
-            // 2 = GANÓ O
-            // ----------------------------------------------------
-
+            // Ganó Android.
             2 -> {
 
                 binding.information.setText(
@@ -391,10 +382,7 @@ class FirstFragment : Fragment() {
             }
 
 
-            // ----------------------------------------------------
-            // 3 = EMPATE
-            // ----------------------------------------------------
-
+            // Empate.
             3 -> {
 
                 binding.information.setText(
@@ -408,31 +396,22 @@ class FirstFragment : Fragment() {
 
 
     // ============================================================
-    // 9. FINALIZAR LA PARTIDA
+    // 10. FINALIZAR PARTIDA
     // ============================================================
 
     private fun finishGame() {
 
-        // Marcamos la partida como terminada.
         gameOver = true
-
-
-        // Deshabilitamos todas las casillas para impedir
-        // movimientos después de terminar la partida.
-        for (button in boardButtons) {
-
-            button.isEnabled = false
-        }
+        computerThinking = false
     }
 
 
     // ============================================================
-    // 10. SELECCIONAR DIFICULTAD
+    // 11. SELECCIONAR DIFICULTAD
     // ============================================================
 
     private fun showDifficultyDialog() {
 
-        // Niveles disponibles.
         val levels = arrayOf(
             "Easy",
             "Harder",
@@ -440,8 +419,6 @@ class FirstFragment : Fragment() {
         )
 
 
-        // Identificamos cuál dificultad está
-        // seleccionada actualmente.
         val selected = when (game.getDifficultyLevel()) {
 
             TicTacToeGame.DifficultyLevel.EASY -> 0
@@ -452,7 +429,6 @@ class FirstFragment : Fragment() {
         }
 
 
-        // Creamos el cuadro de diálogo.
         AlertDialog.Builder(requireContext())
 
             .setTitle("Choose difficulty")
@@ -463,8 +439,6 @@ class FirstFragment : Fragment() {
             ) { dialog, which ->
 
 
-                // Cambiamos la dificultad según
-                // la opción seleccionada.
                 when (which) {
 
                     0 -> game.setDifficultyLevel(
@@ -481,7 +455,6 @@ class FirstFragment : Fragment() {
                 }
 
 
-                // Cerramos el cuadro de diálogo.
                 dialog.dismiss()
             }
 
@@ -490,7 +463,7 @@ class FirstFragment : Fragment() {
 
 
     // ============================================================
-    // 11. CONFIRMAR SALIDA
+    // 12. CONFIRMAR SALIDA
     // ============================================================
 
     private fun showQuitDialog() {
@@ -505,7 +478,6 @@ class FirstFragment : Fragment() {
 
             .setPositiveButton("Yes") { _, _ ->
 
-                // Cerramos la Activity.
                 requireActivity().finish()
             }
 
@@ -519,15 +491,79 @@ class FirstFragment : Fragment() {
 
 
     // ============================================================
-    // 12. LIBERAR VIEW BINDING
+    // 13. REPRODUCIR EFECTOS DE SONIDO
+    // ============================================================
+
+    /**
+     * Reproduce un efecto de sonido almacenado en res/raw.
+     *
+     * Antes de reproducir un sonido nuevo se libera el anterior.
+     * De esta manera evitamos que los efectos se superpongan.
+     */
+    private fun playSound(soundResource: Int) {
+
+        // Si el usuario desactivó el sonido,
+        // no reproducimos ningún efecto.
+        if (!soundEnabled) {
+            return
+        }
+
+        // Detenemos y liberamos cualquier sonido anterior.
+        stopSound()
+
+        // Creamos el nuevo efecto de sonido.
+        mediaPlayer = MediaPlayer.create(
+            requireContext(),
+            soundResource
+        )
+
+        // Cuando termina el sonido liberamos MediaPlayer.
+        mediaPlayer?.setOnCompletionListener {
+
+            it.release()
+
+            mediaPlayer = null
+        }
+
+        // Reproducimos el sonido.
+        mediaPlayer?.start()
+    }
+
+
+    /**
+     * Detiene y libera el sonido que se esté reproduciendo.
+     */
+    private fun stopSound() {
+
+        mediaPlayer?.let {
+
+            if (it.isPlaying) {
+                it.stop()
+            }
+
+            it.release()
+        }
+
+        mediaPlayer = null
+    }
+
+
+    // ============================================================
+    // 14. LIBERAR RECURSOS
     // ============================================================
 
     override fun onDestroyView() {
 
+        // Detenemos cualquier sonido activo.
+        stopSound()
+
+        // Cancelamos movimientos pendientes de Android.
+        if (_binding != null) {
+            binding.boardView.removeCallbacks(null)
+        }
+
         super.onDestroyView()
 
-        // Evita conservar referencias a una vista
-        // que ya fue destruida.
         _binding = null
     }
 }
